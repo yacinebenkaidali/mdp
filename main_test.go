@@ -33,9 +33,40 @@ func TestParseContent(t *testing.T) {
 	}
 }
 
-func TestRun(t *testing.T) {
+func TestRunWithFile(t *testing.T) {
 	var mockStdOut bytes.Buffer
-	if err := run(inputFile, true, "", &mockStdOut); err != nil {
+	if err := run(inputFile, true, "", &mockStdOut, nil); err != nil {
+		t.Fatal(err)
+	}
+	fileName := strings.TrimSpace(mockStdOut.String())
+	result, err := os.ReadFile(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected, err := os.ReadFile(goldenFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(result, expected) {
+		t.Logf("golden:\n%s\n", expected)
+		t.Logf("result:\n%s\n", result)
+		t.Errorf("Result content does not match golden file")
+	}
+
+	os.Remove(fileName)
+}
+
+func TestRunWithStdIn(t *testing.T) {
+	var mockStdOut bytes.Buffer
+	var mockStdIn bytes.Buffer
+
+	data, err := os.ReadFile(inputFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mockStdIn.Write(data)
+
+	if err := run("", true, "", &mockStdOut, &mockStdIn); err != nil {
 		t.Fatal(err)
 	}
 	fileName := strings.TrimSpace(mockStdOut.String())

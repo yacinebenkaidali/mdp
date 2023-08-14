@@ -15,22 +15,6 @@ import (
 	"github.com/russross/blackfriday/v2"
 )
 
-// const (
-//
-//		header = `<!DOCTYPE html>
-//	  <html>
-//		<head>
-//		  <meta http-equiv="content-type" content="text/html; charset=utf-8">
-//		  <title>Markdown Preview Tool</title>
-//		</head>
-//		<body>
-//	  `
-//		footer = `
-//		</body>
-//	  </html>
-//	  `
-//
-// )
 const (
 	defaultTemplate = `<!DOCTYPE html>
   <html>
@@ -55,19 +39,35 @@ func main() {
 	preview := flag.Bool("skip", false, "skip auto-preview")
 	templateName := flag.String("t", "", "Alternate template name")
 	flag.Parse()
+
 	if *filename == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	if err := run(*filename, !(*preview), *templateName, os.Stdout); err != nil {
+	if err := run(*filename, !(*preview), *templateName, os.Stdout, os.Stdin); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
 }
-func run(fileName string, skipPreview bool, tfname string, out io.Writer) error {
-	data, err := os.ReadFile(fileName)
+
+func getInputFromSource(fileName string, in io.Reader) ([]byte, error) {
+	if fileName != "" {
+		data, err := os.ReadFile(fileName)
+		if err != nil {
+			return nil, err
+		}
+		return data, nil
+	}
+	//fallback to stdin incase fileName is empty
+	data, err := io.ReadAll(in)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func run(fileName string, skipPreview bool, tfname string, out io.Writer, in io.Reader) error {
+	data, err := getInputFromSource(fileName, in)
 	if err != nil {
 		return err
 	}
@@ -118,9 +118,11 @@ func parseContent(input []byte, tFname string) ([]byte, error) {
 	}
 	return buffer.Bytes(), nil
 }
+
 func saveHtml(data []byte, outputName string) error {
 	return os.WriteFile(outputName, data, 0644)
 }
+
 func preview(fname string) error {
 	cName := ""
 	cParams := []string{}
