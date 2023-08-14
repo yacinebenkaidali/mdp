@@ -40,11 +40,16 @@ func main() {
 	templateName := flag.String("t", "", "Alternate template name")
 	flag.Parse()
 
+	var template string = *templateName
+	if template == "" {
+		template = os.Getenv("MDP_TEMPLATE")
+	}
+
 	if *filename == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
-	if err := run(*filename, !(*preview), *templateName, os.Stdout, os.Stdin); err != nil {
+	if err := run(*filename, *preview, template, os.Stdout, os.Stdin); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
