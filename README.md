@@ -1,6 +1,6 @@
 # mdp-preview &middot; ![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)
 
-A Cli tool that 
+A Cli tool that allows users to convert markdown files to html and preview them in the default browser.
 
 ## Installation & Usage
 for now you need to clone the repo
