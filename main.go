@@ -34,9 +34,17 @@ type content struct {
 	Body  template.HTML
 }
 
+type config struct {
+	fileName    string
+	skipPreview bool
+	tfname      string
+	out         io.Writer
+	in          io.Reader
+}
+
 func main() {
 	filename := flag.String("file", "", "Markdown file to preview")
-	preview := flag.Bool("skip", false, "skip auto-preview")
+	skipPreview := flag.Bool("skip", false, "skip auto-preview")
 	templateName := flag.String("t", "", "Alternate template name")
 	flag.Parse()
 
@@ -45,11 +53,14 @@ func main() {
 		template = os.Getenv("MDP_TEMPLATE")
 	}
 
-	if *filename == "" {
-		flag.Usage()
-		os.Exit(1)
+	c := config{
+		fileName:    *filename,
+		skipPreview: *skipPreview,
+		tfname:      *templateName,
+		out:         os.Stdout,
+		in:          os.Stdin,
 	}
-	if err := run(*filename, *preview, template, os.Stdout, os.Stdin); err != nil {
+	if err := run(c); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -71,12 +82,12 @@ func getInputFromSource(fileName string, in io.Reader) ([]byte, error) {
 	return data, nil
 }
 
-func run(fileName string, skipPreview bool, tfname string, out io.Writer, in io.Reader) error {
-	data, err := getInputFromSource(fileName, in)
+func run(config config) error {
+	data, err := getInputFromSource(config.fileName, config.in)
 	if err != nil {
 		return err
 	}
-	htmlContent, err := parseContent(data, tfname)
+	htmlContent, err := parseContent(data, config.tfname)
 	if err != nil {
 		return err
 	}
@@ -88,11 +99,11 @@ func run(fileName string, skipPreview bool, tfname string, out io.Writer, in io.
 		return err
 	}
 	outName := temp.Name()
-	fmt.Fprintln(out, outName)
+	fmt.Fprintln(config.out, outName)
 	if err := saveHtml(htmlContent, outName); err != nil {
 		return err
 	}
-	if skipPreview {
+	if config.skipPreview {
 		return nil
 	}
 	defer os.Remove(outName)

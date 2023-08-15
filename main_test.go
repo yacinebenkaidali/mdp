@@ -35,7 +35,14 @@ func TestParseContent(t *testing.T) {
 
 func TestRunWithFile(t *testing.T) {
 	var mockStdOut bytes.Buffer
-	if err := run(inputFile, true, "", &mockStdOut, nil); err != nil {
+	c := config{
+		fileName:    inputFile,
+		skipPreview: true,
+		tfname:      "",
+		out:         &mockStdOut,
+		in:          nil,
+	}
+	if err := run(c); err != nil {
 		t.Fatal(err)
 	}
 	fileName := strings.TrimSpace(mockStdOut.String())
@@ -66,7 +73,15 @@ func TestRunWithStdIn(t *testing.T) {
 	}
 	mockStdIn.Write(data)
 
-	if err := run("", true, "", &mockStdOut, &mockStdIn); err != nil {
+	c := config{
+		fileName:    "",
+		skipPreview: true,
+		tfname:      "",
+		out:         &mockStdOut,
+		in:          &mockStdIn,
+	}
+
+	if err := run(c); err != nil {
 		t.Fatal(err)
 	}
 	fileName := strings.TrimSpace(mockStdOut.String())
